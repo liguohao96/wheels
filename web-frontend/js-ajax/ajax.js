@@ -1,3 +1,8 @@
+/**
+ * version: 0.1
+ * author: Guohao Li
+ * email: liguohao96@163.com 
+ */
 function is_obj_equ(lhs, rhs) {
   if (typeof lhs != typeof rhs) {
     return false;
@@ -59,12 +64,7 @@ function createJSONFunction(method) {
             // callback may be undefined or null which is uncallable
             callback(ret, undefined);
           }
-        } else {
-          if (callback) {
-            // callback may be undefined or null which is uncallable
-            callback(undefined, Error("XMLHttpRequest status:" + xhr.status + "\n" + xhr.responseText));
-          }
-        }
+        } 
       }
     }
 
@@ -102,8 +102,6 @@ const AjaxPost = createJSONFunction('post');
 const AjaxPut = createJSONFunction('put');
 const AjaxDelete = createJSONFunction('delete');
 
-// export { AjaxPost };
-
 function createPromisedJSONFunction(method) {
   method = method.toUpperCase();
   return function (url, json_obj, resolve, reject) {
@@ -123,8 +121,6 @@ function createPromisedJSONFunction(method) {
           } else {
             rej(new Error("XMLHttpRequest status:" + xhr.status + "\n" + xhr.responseText));
           }
-        } else {
-          rej(new Error("XMLHttpRequest status:" + xhr.status));
         }
       }
 
@@ -168,8 +164,6 @@ const AjaxPromisedPut = createPromisedJSONFunction('put');
 const AjaxPromisedDelete = createPromisedJSONFunction('delete');
 const Ajax = (
   function () {
-
-
     // define global cache for return value
     const __global_pool = new Object();
     __global_pool.__url_map = new Map();
@@ -411,6 +405,8 @@ const Ajax = (
       }
     };
     constructor.prototype.upload = function (url, data, ...args) {
+      // expect data to be a FormData
+
       let finish_func, err_func, progress_func;
       const default_progress_func = (ret) => {
         console.log(ret);
@@ -422,6 +418,11 @@ const Ajax = (
         // callback
         finish_func = args[0];
         progress_func = args[1] || default_progress_func;
+        
+        if(!data instanceof FormData){
+          finish_func(undefined, new TypeError("expeted data to be a FormData but got "+data.constructor));
+        }
+
         xhr.onreadystatechange = () => {
           if (xhr.readyState == 4) {
             if (xhr.status == 200) {
@@ -435,11 +436,6 @@ const Ajax = (
                 // callback may be undefined or null which is uncallable
                 finish_func(ret, undefined);
               }
-            } else {
-              if (finish_func) {
-                // callback may be undefined or null which is uncallable
-                finish_func(undefined, Error("XMLHttpRequest status:" + xhr.status + "\n" + xhr.responseText));
-              }
             }
           }
         }
@@ -450,6 +446,11 @@ const Ajax = (
         progress_func = args[1] || default_progress_func;
         err_func = args[2] || default_err_func;
         let ret_p = new Promise((res, rej) => {
+
+          if(!data instanceof FormData){
+            rej(new TypeError("expeted data to be a FormData but got "+data.constructor));
+          }
+
           xhr.onreadystatechange = (event) => {
             if (xhr.readyState == 4) {
               if (xhr.status == 200) {
@@ -492,15 +493,6 @@ const Ajax = (
       // xhr.setRequestHeader('Content-type', 'multipart/form-data');
       // xhr.withCredentials = true;
       if (data) {
-        //   if (!data instanceof FormData) {
-        console.log("build form data")
-        let form_data = new FormData();
-        if ('name' in data) {
-          form_data.append("file", data, data['name']);
-        } else {
-          form_data.append("file", data);
-        }
-        data = form_data;
         xhr.send(data);
       } else {
         throw new Error("payload required");
@@ -533,11 +525,5 @@ const Ajax = (
     return constructor;
   }
 )();
-let auto_api_url = 'http://47.94.96.70:8080/server-0.0.1-SNAPSHOT';
-let auto_upload_url = 'http://47.94.96.70:8080/ERM-WebIO-1.0/file/upload.do';
-if (window.location.protocol == 'https:') {
-  auto_api_url = 'https://47.94.96.70:8080/server-0.0.1-SNAPSHOT';
-  auto_upload_url = 'https://47.94.96.70:8080/ERM-WebIO-1.0/file/upload.do';
-}
 
-const api_url = null;  // default url
+const api_url = null; // default url
