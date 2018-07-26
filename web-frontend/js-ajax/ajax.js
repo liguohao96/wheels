@@ -54,17 +54,17 @@ function createJSONFunction(method) {
     xhr.onreadystatechange = () => {
       if (xhr.readyState == 4) {
         if (xhr.status == 200) {
-          let ret = xhr.responseText;
+          let ret = xhr.response;
           try {
             ret = JSON.parse(ret);
           } catch (e) {
-            ret = xhr.responseText;
+            ret = xhr.response;
           }
           if (callback) {
             // callback may be undefined or null which is uncallable
             callback(ret, undefined);
           }
-        } 
+        }
       }
     }
 
@@ -85,6 +85,7 @@ function createJSONFunction(method) {
       json_obj = null;
     }
     xhr.open(method, url, true);
+    xhr.responseType = this.responseType || 'text';
     const headers = this.headers;
     for (let v in headers) {
       xhr.setRequestHeader(v, headers[v]);
@@ -111,11 +112,12 @@ function createPromisedJSONFunction(method) {
       xhr.onreadystatechange = () => {
         if (xhr.readyState == 4) {
           if (xhr.status == 200) {
-            let ret = xhr.responseText;
+            console.log(xhr);
+            let ret = xhr.response;
             try {
               ret = JSON.parse(ret);
             } catch (e) {
-              ret = xhr.responseText;
+              ret = xhr.response;
             }
             res(ret);
           } else {
@@ -143,6 +145,7 @@ function createPromisedJSONFunction(method) {
       }
 
       xhr.open(method, url, true);
+      xhr.responseType = this.responseType || 'text';
       const headers = this.headers;
       for (let v in headers) {
         xhr.setRequestHeader(v, headers[v]);
@@ -235,15 +238,19 @@ const Ajax = (
     // define default values
     const __type_enum = ['callback', 'promise'];
     let __default_type = __type_enum[0];
-    let __default_reject = function (msg) {
-      console.error('reject has occurd')
-      console.error(msg);
+    let __default_resolve = function (data) {
+      return data;
     }
-    const __default = {
+    let __default_reject = function (msg) {
+      console.warn('reject has occurd')
+      console.warn(msg);
+    }
+    const __default_options = {
       headers: {
         "content-type": "application/json"
       },
       withCredentials: true,
+      responseType: '',
       cache: true,
       debug: false
     };
@@ -252,11 +259,11 @@ const Ajax = (
       if (this) {
         this._type = type || __default_type;
         options = options || {};
-        this._headers = options.headers || __default.headers;
-        this._with_credentials = 'withCredentials' in options ? options.withCredentials : __default.withCredentials;
-        this._cache = 'cache' in options ? options.cache : __default.cache;
-        this._debug = 'debug' in options ? options.debug : __default.debug;
-
+        this._headers = options.headers || __default_options.headers;
+        this._with_credentials = 'withCredentials' in options ? options.withCredentials : __default_options.withCredentials;
+        this._responseType = 'responseType' in options ? options.responseType : __default_options.responseType;
+        this._cache = 'cache' in options ? options.cache : __default_options.cache;
+        this._debug = 'debug' in options ? options.debug : __default_options.debug;
         const _cache = {
           delete: function (url, method, req) {
             __global_pool.delete(url, method, req);
@@ -276,11 +283,21 @@ const Ajax = (
         __default_type = type;
       }
     });
+    constructor.prototype.__defineSetter__("default_options", function (options) {
+      for (let k in __default_options) {
+        if (k in options) {
+          __default_options[k] = options[k];
+        }
+      }
+    });
     constructor.prototype.__defineGetter__("headers", function () {
       return this._headers;
     });
     constructor.prototype.__defineGetter__("withCredentials", function () {
       return this._with_credentials;
+    });
+    constructor.prototype.__defineGetter__("responseType", function () {
+      return this._responseType;
     });
 
     // request function
@@ -320,7 +337,7 @@ const Ajax = (
           AjaxGet.call(this, url, data, callback_fn);
         }
       } else {
-        const resolve = args[0],
+        const resolve = args[0] || __default_resolve,
           reject = args[1] || __default_reject;
 
         let promise;
@@ -360,7 +377,7 @@ const Ajax = (
         AjaxPost.call(this, url, data, callback_fn);
         return this;
       } else {
-        const resolve = args[0],
+        const resolve = args[0] || __default_resolve,
           reject = args[1] || __default_reject;
         const promise = AjaxPromisedPost.call(this, url, data, resolve, reject);
         if (!this._promise) {
@@ -377,7 +394,7 @@ const Ajax = (
         AjaxPut.call(this, url, data, callback_fn);
         return this;
       } else {
-        const resolve = args[0],
+        const resolve = args[0] || __default_resolve,
           reject = args[1] || __default_reject;
         const promise = AjaxPromisedPut.call(this, url, data, resolve, reject);
         if (!this._promise) {
@@ -393,7 +410,7 @@ const Ajax = (
         const callback_fn = args[0];
         AjaxDelete.call(this, url, data, callback_fn);
       } else {
-        const resolve = args[0],
+        const resolve = args[0] || __default_resolve,
           reject = args[1] || __default_reject;
         const promise = AjaxPromisedDelete.call(this, url, data, resolve, reject);
         if (!this._promise) {
@@ -418,9 +435,9 @@ const Ajax = (
         // callback
         finish_func = args[0];
         progress_func = args[1] || default_progress_func;
-        
-        if(!data instanceof FormData){
-          finish_func(undefined, new TypeError("expeted data to be a FormData but got "+data.constructor));
+
+        if (!data instanceof FormData) {
+          finish_func(undefined, new TypeError("expeted data to be a FormData but got " + data.constructor));
         }
 
         xhr.onreadystatechange = () => {
@@ -447,8 +464,8 @@ const Ajax = (
         err_func = args[2] || default_err_func;
         let ret_p = new Promise((res, rej) => {
 
-          if(!data instanceof FormData){
-            rej(new TypeError("expeted data to be a FormData but got "+data.constructor));
+          if (!data instanceof FormData) {
+            rej(new TypeError("expeted data to be a FormData but got " + data.constructor));
           }
 
           xhr.onreadystatechange = (event) => {

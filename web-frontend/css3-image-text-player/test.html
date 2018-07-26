@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Page Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <style>
+        html,
+        body {
+            min-height: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        .page-wrapper {
+            width: 100%;
+            max-width: 100%;
+            min-height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow-x: hidden;
+            overflow-y: hidden;
+        }
+
+        .page-wrapper>.page-body {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
+            overflow-y: hidden;
+            align-self: flex-start;
+        }
+
+        .page-body>.page {
+            overflow-x: hidden;
+            /* transition: all 1.0s cubic-bezier(0.15, .51, 0.65, .5); */
+            transition: all 1.0s linear;
+            /* http://cubic-bezier.com */
+            position: relative;
+            float: left;
+            min-height: 100%;
+            width: 100%;
+            min-width: 100%;
+            /* display: inline; */
+        }
+
+        .page-wrapper>.page-selector {
+            width: 100%;
+            height: 20px;
+            display: flex;
+            align-self: flex-end;
+            flex-direction: row;
+            justify-content: center;
+        }
+
+        .page-wrapper>.page-selector>button {
+            margin-left: 0.5em;
+            font-size: 10px;
+            display: contents !important;
+        }
+
+        .page-wrapper>.page-selector>.selected {
+            font-size: 15px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page-wrapper">
+        <div class="page-body" style="float: left;">
+            <div class="page" style="max-height:120px;height:120px !important; width:100%; background: black;">
+                <div style="color: white;">
+                    <div style="display: inline;">1</div>
+                    <div style="display: inline;">1</div>
+                    <div style="display: inline;">1</div>
+                    <div style="display: inline;">1</div>
+                </div>
+            </div>
+            <div class="page" style="height:1520px !important; width:100%; background: grey;"></div>
+            <div class="page" style="height:120px !important; width:100%; background: lightgrey;"></div>
+            <div style="clear: both;"> </div>
+        </div>
+        <div style="clear: both;"> </div>
+        <div class="page-selector">
+            <button>1</button>
+            <button>2</button>
+            <button>3</button>
+        </div>
+    </div>
+    <script>
+        window.addEventListener('load', function (event) {
+            let edtor_inited = false;
+
+            let page_roots = document.getElementsByClassName('page-wrapper');
+            for (let page_root of page_roots) {
+                let selectors = page_root.getElementsByClassName('page-selector')[0].getElementsByTagName(
+                    'button');
+                let page_body = page_root.getElementsByClassName('page-body')[0];
+                let pages = page_body.getElementsByClassName('page');
+                let last_selected_idx = 0;
+                let page_height = [];
+                for (let i = 0; i < selectors.length; ++i) {
+                    const idx = i;
+                    page_height.push(pages[i].offsetHeight + 'px');
+                    // pages[idx].style.display = 'none';
+                    // pages[idx].style.marginLeft = ((i - last_selected_idx) * 100) + "%";
+
+                    console.log(idx, pages[idx].style.marginLeft);
+                    console.log(idx);
+                    selectors[idx].addEventListener('click', function () {
+                        page_body.style.height = page_height[idx];
+                        selectors[last_selected_idx].classList.remove('selected');
+                        selectors[idx].classList.add('selected');
+
+
+                        // pages[idx].style.display = 'block';
+                        // pages[last_selected_idx].style.opacity = '0';
+                        // pages[idx].style.opacity = '1';
+                        // pages[idx].style.marginLeft = '0%';
+
+                        // pages[last_selected_idx].style.marginLeft = ((last_selected_idx - idx )*100) + "%"
+                        // const to_hide_idx = last_selected_idx;
+                        // setTimeout(() => {
+                        //     pages[to_hide_idx].style.display = 'none';
+                        // }, 150)
+
+                        for (let j = 0; j < selectors.length; ++j) {
+                            // if (j == idx)
+                            //     continue
+                            pages[j].style.marginLeft = ((j - idx) * 100) + '%';
+                        }
+
+                        last_selected_idx = idx;
+                        // pages[idx].style.marginLeft = "0%";
+
+                        setTimeout(() => {}, 100);
+                    })
+                }
+                page_body.style.height = page_height[last_selected_idx];
+                console.log(page_height, last_selected_idx)
+                // pages[last_selected_idx].style.opacity = '1';
+                selectors[last_selected_idx].classList.add('selected');
+            }
+        })
+    </script>
+</body>
+
+</html>
