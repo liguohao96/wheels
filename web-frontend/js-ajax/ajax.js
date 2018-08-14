@@ -246,10 +246,8 @@ const Ajax = (
       console.warn(msg);
     }
     const __default_options = {
-      headers: {
-        "content-type": "application/json"
-      },
-      withCredentials: true,
+      headers: {},
+      withCredentials: false,
       responseType: '',
       cache: true,
       debug: false
