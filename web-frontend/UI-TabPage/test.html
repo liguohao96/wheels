@@ -68,6 +68,15 @@
             font-size: 15px;
         }
 
+        .page-wrapper>.page-selector>.disabled {
+            color: gray;
+        }
+
+        .page-wrapper>.page-selector>.disabled:hover {
+            cursor: not-allowed;
+            color: gray;
+        }
+
         .divider {
             height: 5px;
             width: 100%;
@@ -113,60 +122,178 @@
         </div>
     </div>
     <script>
+        var Tab = (function () {
+            function constructor(options) {
+                var page_root = options.el;
+                var message_function = options.alerter || alert;
+                this.page_root = page_root;
+                this.message_function = message_function;
+                this.selectors = page_root.querySelector('.page-selector').querySelectorAll(
+                    'button');
+                this.page_body = page_root.querySelector('.page-body');
+                this.pages = this.page_body.querySelectorAll('.page');
+                this.last_selected = 0;
+                this.page_height = [];
+                this.visited = [];
+                this.messages = [];
+                for (var i = 0, len = this.selectors.length; i < len; ++i) {
+                    ((function () {
+                        var idx = i; // make idx be in closure
+                        this.visited.push(false);
+                        this.messages.push('');
+                        this.page_height.push(this.pages[idx].offsetHeight + 'px');
+                        this.selectors[idx].addEventListener('click', (function () {
+                            this.goto({
+                                'index': idx
+                            });
+                        }).bind(this));
+                    }).bind(this))();
+                }
+
+                this.visited[this.last_selected] = true;
+                this.page_body.style.height = this.page_height[this.last_selected];
+                this.selectors[this.last_selected].classList.add('selected');
+            }
+            constructor.prototype.disable = function (option) {
+                if (!option) {
+                    return this;
+                }
+                var index = option.index,
+                    message = option.message || 'disabled',
+                    hint = option.hint || 'disabled';
+                if (index < this.pages.length) {
+                    this.messages[index] = message;
+                    this.selectors[index].setAttribute('title', hint);
+                    this.selectors[index].classList.add('disabled');
+                }
+
+                return this;
+            };
+            constructor.prototype.enable = function (option) {
+                if (!option) {
+                    return this;
+                }
+                var index = option.index,
+                    message = option.message || '',
+                    hint = option.hint || '';
+                if (index < this.pages.length) {
+                    this.messages[index] = message;
+                    this.selectors[index].setAttribute('title', hint);
+                    this.selectors[index].classList.remove('disabled');
+                }
+
+                return this;
+            };
+            constructor.prototype.goto = function (option) {
+                if (!option) {
+                    return this;
+                }
+                var idx = option.index,
+                    message = option.message || '';
+                if (idx < this.pages.length) {
+                    if (this.selectors[idx].classList.contains('disabled')) {
+                        if (this.messages[idx]) {
+                            this.message_function(this.messages[idx]);
+                        }
+                        return this;
+                    }
+                    if (message) {
+                        this.message_function(message);
+                    }
+                    this.selectors[this.last_selected].classList.remove('selected');
+                    this.selectors[idx].classList.add('selected');
+
+                    this.last_selected = idx;
+                    this.page_body.style.disable = 'none'; // reduce refresh times
+                    for (let j = 0, len = this.selectors.length; j < len; ++j) {
+                        this.pages[j].style.marginLeft = ((j - idx) * 100).toString() +
+                            '%';
+                    }
+                    this.page_body.style.height = this.page_height[idx];
+                    this.page_body.style.disable = 'block';
+                }
+                return this;
+            };
+            constructor.prototype.setHeight = function (option) {
+                if (!option) {
+                    return this;
+                }
+                var index = option.index,
+                    height = option.height;
+                if (index < this.pages.length) {
+                    height = height || this.pages[index].offsetHeight;
+                    this.page_height[index] = height + 'px';
+                }
+
+                return this;
+            };
+            return constructor;
+        })();
+
+        var tab;
         window.addEventListener('load', function (event) {
             var edtor_inited = false;
 
-            var page_roots = document.getElementsByClassName('page-wrapper');
-            for (var page_idx = 0; page_idx < page_roots.length; ++page_idx) {
-                var page_root = page_roots[page_idx];
-                var selectors = page_root.getElementsByClassName('page-selector')[0].getElementsByTagName(
-                    'button');
-                var page_body = page_root.getElementsByClassName('page-body')[0];
-                var pages = page_body.getElementsByClassName('page');
-                var last_selected_idx = 0;
-                var page_height = [];
-                for (var i = 0; i < selectors.length; ++i) {
-                    const idx = i;
-                    page_height.push(pages[i].offsetHeight + 'px');
-                    // pages[idx].style.display = 'none';
-                    // pages[idx].style.marginLeft = ((i - last_selected_idx) * 100) + "%";
+            var page_roots = document.querySelectorAll('.page-wrapper');
+            tab = new Tab({
+                'el': page_roots[0]
+            });
+            tab.disable({
+                index: 2
+            });
+            tab.enable({
+                index: 2
+            });
+            // for (var page_idx = 0; page_idx < page_roots.length; ++page_idx) {
+            //     var page_root = page_roots[page_idx];
+            //     var selectors = page_root.getElementsByClassName('page-selector')[0].getElementsByTagName(
+            //         'button');
+            //     var page_body = page_root.getElementsByClassName('page-body')[0];
+            //     var pages = page_body.getElementsByClassName('page');
+            //     var last_selected_idx = 0;
+            //     var page_height = [];
+            //     for (var i = 0; i < selectors.length; ++i) {
+            //         const idx = i;
+            //         page_height.push(pages[i].offsetHeight + 'px');
+            //         // pages[idx].style.display = 'none';
+            //         // pages[idx].style.marginLeft = ((i - last_selected_idx) * 100) + "%";
 
-                    console.log(idx, pages[idx].style.marginLeft);
-                    console.log(idx);
-                    selectors[idx].addEventListener('click', function () {
-                        page_body.style.height = page_height[idx];
-                        selectors[last_selected_idx].classList.remove('selected');
-                        selectors[idx].classList.add('selected');
+            //         console.log(idx, pages[idx].style.marginLeft);
+            //         console.log(idx);
+            //         selectors[idx].addEventListener('click', function () {
+            //             page_body.style.height = page_height[idx];
+            //             selectors[last_selected_idx].classList.remove('selected');
+            //             selectors[idx].classList.add('selected');
 
 
-                        // pages[idx].style.display = 'block';
-                        // pages[last_selected_idx].style.opacity = '0';
-                        // pages[idx].style.opacity = '1';
-                        // pages[idx].style.marginLeft = '0%';
+            //             // pages[idx].style.display = 'block';
+            //             // pages[last_selected_idx].style.opacity = '0';
+            //             // pages[idx].style.opacity = '1';
+            //             // pages[idx].style.marginLeft = '0%';
 
-                        // pages[last_selected_idx].style.marginLeft = ((last_selected_idx - idx )*100) + "%"
-                        // const to_hide_idx = last_selected_idx;
-                        // setTimeout(() => {
-                        //     pages[to_hide_idx].style.display = 'none';
-                        // }, 150)
+            //             // pages[last_selected_idx].style.marginLeft = ((last_selected_idx - idx )*100) + "%"
+            //             // const to_hide_idx = last_selected_idx;
+            //             // setTimeout(() => {
+            //             //     pages[to_hide_idx].style.display = 'none';
+            //             // }, 150)
 
-                        for (var j = 0; j < selectors.length; ++j) {
-                            // if (j == idx)
-                            //     continue
-                            pages[j].style.marginLeft = ((j - idx) * 100) + '%';
-                        }
+            //             for (var j = 0; j < selectors.length; ++j) {
+            //                 // if (j == idx)
+            //                 //     continue
+            //                 pages[j].style.marginLeft = ((j - idx) * 100) + '%';
+            //             }
 
-                        last_selected_idx = idx;
-                        // pages[idx].style.marginLeft = "0%";
+            //             last_selected_idx = idx;
+            //             // pages[idx].style.marginLeft = "0%";
 
-                        // setTimeout(() => {}, 100);
-                    })
-                }
-                page_body.style.height = page_height[last_selected_idx];
-                console.log(page_height, last_selected_idx)
-                // pages[last_selected_idx].style.opacity = '1';
-                selectors[last_selected_idx].classList.add('selected');
-            }
+            //             // setTimeout(() => {}, 100);
+            //         })
+            //     }
+            //     page_body.style.height = page_height[last_selected_idx];
+            //     console.log(page_height, last_selected_idx)
+            //     // pages[last_selected_idx].style.opacity = '1';
+            //     selectors[last_selected_idx].classList.add('selected');
+            // }
         })
     </script>
 </body>
