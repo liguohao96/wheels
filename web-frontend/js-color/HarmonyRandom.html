@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Page Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script>
+        var r = Math.round(Math.random() * 255);
+        var g = Math.round(Math.random() * 255);
+        var b = Math.round(Math.random() * 255);
+
+        function RandomRGB() {
+            return [
+                Math.round(Math.random() * 255),
+                Math.round(Math.random() * 255),
+                Math.round(Math.random() * 255)
+            ]
+        }
+
+        function RGB2HSL([r, g, b]) {
+            var r_ = r / 255,
+                g_ = g / 255,
+                b_ = b / 255;
+            var c_max = Math.max(r_, g_, b_),
+                c_min = Math.min(r_, g_, b_);
+            var c_max_idx = [r_, g_, b_].indexOf(c_max),
+                c_min_idx = [r_, g_, b_].indexOf(c_min);
+            var delta = c_max - c_min;
+            var h, s, l;
+            l = (c_max + c_min) / 2;
+            if (delta == 0) {
+                s = 0;
+                h = 0;
+            } else {
+                s = delta / (1 - Math.abs(2 * l - 1));
+                if (c_max_idx == 0) {
+                    h = 60 * (Math.round((g_ - b_) / delta) % 6);
+                } else if (c_max_idx == 1) {
+                    h = 60 * ((b_ - r_) / delta + 2);
+                } else {
+                    h = 60 * ((r_ - g_) / delta + 4);
+                }
+            }
+            h = (h + 360) % 360;
+            return [h, s, l];
+        }
+
+        function HSL2RGB([h, s, l]) {
+            var c = (1 - Math.abs(2 * l - 1)) * s,
+                x = c * (1 - Math.abs((h / 60) % 2 - 1)),
+                m = l - c / 2;
+            var r_ = 0,
+                g_ = 0,
+                b_ = 0;
+            if (h < 60) {
+                r_ = c, g_ = x;
+            } else if (h < 120) {
+                r_ = x, g_ = c;
+            } else if (h < 180) {
+                g_ = c, b_ = x;
+            } else if (h < 240) {
+                g_ = x, b_ = c
+            } else if (h < 300) {
+                r_ = x, b_ = c
+            } else {
+                r_ = c, b_ = x;
+            }
+            // console.log([r_, g_, b_]);
+            var r = Math.round((r_ + m) * 255),
+                g = Math.round((g_ + m) * 255),
+                b = Math.round((b_ + m) * 255);
+            return [r, g, b];
+        }
+
+        function RGB2HSV([r, g, b]) {
+            var r_ = r / 255,
+                g_ = g / 255,
+                b_ = b / 255;
+            var c_max = Math.max(r_, g_, b_),
+                c_min = Math.min(r_, g_, b_);
+            var c_max_idx = [r_, g_, b_].indexOf(c_max),
+                c_min_idx = [r_, g_, b_].indexOf(c_min);
+            var delta = c_max - c_min;
+            var h, s = 0,
+                v = c_max;
+            if (c_max !== 0) {
+                s = delta / v;
+            }
+            if (delta == 0) {
+                h = 0;
+            } else {
+                if (c_max_idx == 0) {
+                    h = 60 * (Math.round((g_ - b_) / delta) % 6);
+                } else if (c_max_idx == 1) {
+                    h = 60 * ((b_ - r_) / delta + 2);
+                } else {
+                    h = 60 * ((r_ - g_) / delta + 4);
+                }
+            }
+            return [h, s, v];
+        }
+
+        function HSV2RGB([h, s, v]) {
+            var c = v * s,
+                x = c * (1 - Math.abs((h / 60) % 2 - 1)),
+                m = v - c;
+            var r_ = 0,
+                g_ = 0,
+                b_ = 0;
+            if (h < 60) {
+                r_ = c, g_ = x;
+            } else if (h < 120) {
+                r_ = x, g_ = c;
+            } else if (h < 180) {
+                g_ = c, b_ = x;
+            } else if (h < 240) {
+                g_ = x, b_ = c
+            } else if (h < 300) {
+                r_ = x, b_ = c
+            } else {
+                r_ = c, b_ = x;
+            }
+            // console.log([r_, g_, b_]);
+            var r = Math.round((r_ + m) * 255),
+                g = Math.round((g_ + m) * 255),
+                b = Math.round((b_ + m) * 255);
+            return [r, g, b];
+        }
+
+        function Reverse([r, g, b]) {
+            var [h, s, v] = RGB2HSV([r, g, b]);
+            h = (h + 180) % 360;
+            s = Math.min(1, s * 1.8);
+            v = Math.min(1, v * 2);
+            // return [255 - r, 255 - g, 255 - b];
+            return HSV2RGB([h, s, v]);
+        }
+
+        function RGB2HEX([r, g, b]) {
+            var hex = '';
+            hex += ('0' + r.toString(16)).slice(-2);
+            hex += ('0' + g.toString(16)).slice(-2);
+            hex += ('0' + b.toString(16)).slice(-2);
+            return hex;
+        }
+        var reached = false;
+
+        function cool_rgb(blacklist, threshold) {
+            blacklist = blacklist || [];
+            threshold = threshold || 9 * 16 * 16;
+            var max_attempt = 10000,
+                attempt_cnt = 0;;
+            var r, g, b;
+            var h, s, l;
+            var h_, s_, v_;
+            var passed = false;
+            var ret = [];
+            while (!passed && attempt_cnt < max_attempt) {
+                passed = true;
+                attempt_cnt += 1;
+                [r, g, b] = RandomRGB();
+                // ret.push([r, g, b]);
+                // [h, s, l] = RGB2HSL([r, g, b]);
+                // l = Math.min(1, l * 1.5);
+
+                [h_, s_, v_] = RGB2HSV([r, g, b]);
+                s_ = Math.max(0.1, s_ * 0.5);
+                v_ = Math.min(1, v_ * 1.7);
+                [r, g, b] = HSV2RGB([h_, s_, v_]);
+                // ret.push(HSL2RGB([h, s, l]));
+                // ret.push(HSV2RGB([h_, s_, v_]));
+                for (var i = 0; i < blacklist.length; ++i) {
+                    var [_r, _g, _b] = blacklist[i];
+                    var dis = 2 * Math.pow(_r - r, 2) + 4 * Math.pow(_g - g, 2) + 3 * Math.pow(_b - b, 2);
+                    if (dis <= threshold) {
+                        passed = false;
+                        break;
+                    }
+                }
+            }
+            if (attempt_cnt == max_attempt)
+                reached = true;
+            ret = [r, g, b];
+            return ret;
+        }
+        window.addEventListener('load', function () {
+            var blacklist = [
+                [0, 0, 0], // white
+                [255, 255, 255] // black
+            ]
+            var test_zone = document.querySelector('#test-zone');
+            var div = test_zone.getElementsByTagName('div');
+            var rgb = cool_rgb(blacklist);
+            div[0].style.background = '#' + RGB2HEX(rgb);
+            // div[0].innerText = RGB2HEX(rgb);
+            blacklist.push(rgb);
+            while (!reached) {
+                var cloned = div[0].cloneNode(true);
+                rgb = cool_rgb(blacklist);
+                blacklist.push(rgb);
+                cloned.style.background = '#' + RGB2HEX(rgb);
+                cloned.style.color = '#' + RGB2HEX(Reverse(rgb));
+                // cloned.innerText = RGB2HEX(rgb);
+                test_zone.appendChild(cloned);
+            }
+            // div[1].style.background = '#' + RGB2HEX(rgb_hsl);
+            // div[2].style.background = '#' + RGB2HEX(rgb_hsv);
+        })
+    </script>
+    <style>
+        html,
+        body {
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="test-zone" style="width:100%;display: flex; flex-direction: rwo;flex-wrap: wrap;color:white;font-size: 10px;">
+        <div style="height:50px; width:50px;">
+        </div>
+    </div>
+</body>
+
+</html>
