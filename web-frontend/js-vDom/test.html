@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Page Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- <link rel="stylesheet" href="/css/audio/fontawesome-all.css"> -->
+    <style>
+        fieldset,
+        label {
+            margin: 0;
+            padding: 0;
+        }
+
+        /****** Style Star Rating Widget *****/
+
+        .rating {
+            border: none;
+            float: left;
+        }
+
+        .rating>input {
+            /* display: none; */
+        }
+
+        .rating>label:before {
+            margin: 5px;
+            font-size: 1.25em;
+            font-family: "Font Awesome 5 Free";
+            display: inline-block;
+            content: "\f005";
+        }
+
+        .rating>.half:before {
+            content: "\f089";
+            position: absolute;
+        }
+
+        .rating>label {
+            color: #ddd;
+            float: right;
+        }
+
+        .rating>input:checked~label,
+        .rating:not(:checked)>label:hover,
+        .rating:not(:checked)>label:hover~label {
+            color: #FFD700;
+            font-weight: 900;
+        }
+
+        .rating>input:checked+label:hover,
+        /* hover current star when changing rating */
+
+        .rating>input:checked~label:hover,
+        .rating>label:hover~input:checked~label,
+        /* lighten current selection */
+
+        .rating>input:checked~label:hover~label {
+            color: #FFED85;
+            font-weight: 900;
+        }
+
+        .star-rate {
+            width: 200px;
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            flex-flow: row-reverse;
+        }
+
+        .star-rate>input {
+            display: none;
+        }
+
+        .star-rate>i:hover,
+        .star-rate>i:hover~i {
+            font-weight: 900;
+            color: #FFD700;
+        }
+
+        .star-rate>input:checked {
+            display: inline;
+        }
+
+        .star-rate>input:checked+i,
+        .star-rate>input:checked~i:hover,
+        .star-rate>i:hover~input:checked~i,
+        .star-rate>input:checked~i {
+            font-weight: 900;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="star-rate">
+        <input type="radio" name="rating" value="1">
+        <i class="far fa-star" title="5"></i>
+        <input type="radio" name="rating" value="2">
+        <i class="far fa-star" title="4"></i>
+        <input type="radio" name="rating" value="3">
+        <i class="far fa-star" title="3"></i>
+        <input type="radio" name="rating" value="4">
+        <i class="far fa-star" title="2"></i>
+        <input type="radio" name="rating" value="5">
+        <i class="far fa-star" title="1"></i>
+    </div>
+    <div class="rating">
+        <input type="radio" id="star5" name="rating" value="5" />
+        <label class="full" for="star5" title="Awesome - 5 stars"></label>
+
+        <input type="radio" id="star4half" name="rating" value="4 and a half" />
+        <label class="half" for="star4half" title="Pretty good - 4.5 stars"></label>
+
+        <input type="radio" id="star4" name="rating" value="4" />
+        <label class="full" for="star4" title="Pretty good - 4 stars"></label>
+
+        <input type="radio" id="star3half" name="rating" value="3 and a half" />
+        <label class="half" for="star3half" title="Meh - 3.5 stars"></label>
+        <input type="radio" id="star3" name="rating" value="3" />
+        <label class="full" for="star3" title="Meh - 3 stars"></label>
+        <input type="radio" id="star2half" name="rating" value="2 and a half" />
+        <label class="half" for="star2half" title="Kinda bad - 2.5 stars"></label>
+        <input type="radio" id="star2" name="rating" value="2" />
+        <label class="full" for="star2" title="Kinda bad - 2 stars"></label>
+        <input type="radio" id="star1half" name="rating" value="1 and a half" />
+        <label class="half" for="star1half" title="Meh - 1.5 stars"></label>
+        <input type="radio" id="star1" name="rating" value="1" />
+        <label class="full" for="star1" title="Sucks big time - 1 star"></label>
+        <input type="radio" id="starhalf" name="rating" value="half" />
+        <label class="half" for="starhalf" title="Sucks big time - 0.5 stars"></label>
+    </div>
+    <div id="list-wrapper">
+        <div v-for="list" v-on:click="xx">
+            <div class="star-five"></div>
+            <h1 value="{name}">{name}</h1>
+            <strong> {score}</strong>
+        </div>
+    </div>
+    <div id="app">
+        <input type="text" name="" id="" v-model="text"> {text}
+    </div>
+    <div id="info">
+        <img v-bind:src="src"/> {name}/{age}
+    </div>
+</body>
+<script>
+    var node_env = this ? false : true;
+
+    var __format = function (obj, arg_str) {
+        if (typeof (obj) == "object") {
+            return obj.toString();
+        }
+        if (typeof (obj) == "string") {
+            return obj;
+        }
+        if (typeof (obj) == "number") {
+            let naive_str = obj.toString();
+            if (!arg_str) {
+                return naive_str;
+            }
+
+            var arg_reg = new RegExp(':([0-9]+)?.([0-9]+)([f])');
+            var result = arg_reg.exec(arg_str);
+
+            var int_percision = parseInt(result[1]) || 0;
+            var float_percision = parseInt(result[2]) || 0;
+
+            naive_str = obj.toFixed(float_percision);
+            var int_reg = new RegExp('([+-])?([0-9]+)((.)([0-9]+))?');
+            result = int_reg.exec(naive_str);
+
+            var int_part = result[2];
+            var float_part = result[3] || '';
+            var sign_part = result[1] || '';
+
+            for (var i = sign_part.length; i < int_percision; ++i) {
+                int_part = "0" + int_part;
+            }
+            int_part = int_part.slice(int_part.length - Math.max(result[2].length, int_percision - sign_part.length),
+                int_part.length);
+            return sign_part + int_part + float_part;
+        }
+    };
+    String.prototype.format = function () {
+        var args = arguments,
+            result = this;
+        if (arguments.length > 0) {
+            var reg = new RegExp("({)(([_a-zA-Z][_a-zA-Z0-9]*)|([0-9]+)|())(:[.a-zA-Z0-9]+)?(}|)", "g");
+            var ret = reg.exec(this);
+            var last_idx = 0;
+            var result_list = [];
+            var incremental_idx = 0;
+            while (ret) {
+                var normal = this.slice(last_idx, ret.index);
+                result_list.push(normal);
+                if (ret[3]) {
+                    // key
+                    var key = ret[3];
+                    if (args.length == 1 && typeof (args[0]) == "object") {
+                        if (key in args[0]) {
+                            // format?
+                            result_list.push(__format(args[0][key], ret[6]));
+                        }
+                    }
+                } else {
+                    var index = incremental_idx;
+                    if (ret[4]) {
+                        // index
+                        index = parseInt(ret[4]);
+                    } else {
+                        // incremental index
+                        ++incremental_idx;
+                    }
+                    result_list.push(__format(args[index], ret[6]));
+                }
+                last_idx = ret.index + ret[0].length;
+                ret = reg.exec(this);
+            }
+            if (last_idx < this.length) {
+                result_list.push(this.slice(last_idx, this.length))
+            }
+            return result_list.join('');
+        }
+        return result;
+    };
+</script>
+<script>
+    window.addEventListener('DOMContentLoaded', function () {
+        function dom_from_str(str) {
+            var div_dom = document.createElement('div');
+            div_dom.innerHTML = str;
+            return div_dom.removeChild(div_dom.firstChild);
+        }
+
+        function Dep() {
+            this.subs = [];
+        }
+        Dep.prototype = {
+            addSub: function (sub) {
+                this.subs.push(sub);
+            },
+            notify: function () {
+                for (var i = 0, len = this.subs.length; i < len; ++i) {
+                    this.subs[i].update();
+                }
+            }
+        }
+
+        function Watcher(vm, node, name, nodeType) {
+            this.name = name;
+            this.node = node;
+            this.vm = vm;
+            this.nodeType = nodeType;
+            this.vm.$watcher[name].addSub(this);
+            // this.update();
+        }
+
+        Watcher.prototype = {
+            update: function () {
+                this.get();
+                switch (this.nodeType.type) {
+                    case 'input':
+                        {
+                            this.node.value = this.value;
+                            break;
+                        };
+                    case 'text':
+                        {
+                            // this.node.vparent.innerHTML = "";
+                            // var clone_node = dom_from_str(this.node.template.format(this));
+                            // this.node.vparent.appendChild(clone_node);
+                            console.log(this.node.template.format(this.vm))
+                            this.node.nodeValue = this.node.template.format(this.vm);
+                            break;
+                        };
+                    case 'list':
+                        {
+                            this.node.vparent.innerHTML = "";
+                            for (var i = 0, len = this.value.length; i < len; ++i) {
+                                var item = this.value[i];
+                                var clone_node = this.node.cloneNode();
+                                clone_node.removeAttribute('id');
+                                clone_node.innerHTML = this.node.template.format(item);
+                                this.node.vparent.appendChild(clone_node, this.node);
+                            }
+                            break;
+                        }
+                    case 'attr':
+                        {
+                            this.node.setAttribute(this.nodeType.name, this.value);
+                            break;
+                        }
+                }
+            },
+            get: function () {
+                this.value = this.vm[this.name];
+            }
+        }
+
+        function compile(node, vm) {
+            var reg = /\{([a-zA-Z0-9]*)\}/g;
+            console.log(node);
+            if (node.nodeType === 1) {
+                // element
+                var attrs = node.attributes;
+                console.log(attrs);
+                var delete_attr = [];
+                for (var i = 0, len = attrs.length; i < len; ++i) {
+                    console.log(attrs[i]);
+                    console.log('{} {}'.format(attrs[i].name, attrs[i].value));
+                    var ret = attrs[i].name.split(':');
+                    name = ret[0];
+                    switch (name) {
+                        case 'v-model':
+                            {
+                                var name = attrs[i].value;
+                                node.addEventListener('input', function (e) {
+                                    vm[name] = e.target.value;
+                                })
+                                node.value = vm.data[name];
+                                delete_attr.push('v-model');
+                                new Watcher(vm, node, name, {
+                                    type: 'input'
+                                });
+                                break;
+                            }
+                        case 'v-bind':
+                            {
+                                var arr_name = attrs[i].value;
+                                delete_attr.push('v-bind:' + ret[1]);
+                                new Watcher(vm, node, arr_name, {
+                                    type: 'attr',
+                                    name: ret[1]
+                                });
+                                break;
+                            }
+                        case 'v-for':
+                            {
+                                var arr_name = attrs[i].value;
+                                delete_attr.push('v-for');
+                                node.template = node.innerHTML;
+                                node.vparent.removeChild(node);
+                                new Watcher(vm, node, arr_name, {
+                                    type: 'list'
+                                });
+                                break;
+                            }
+                    }
+                }
+                for (var i = 0, len = delete_attr.length; i < len; ++i) {
+                    node.removeAttribute(delete_attr[i]);
+                }
+            } else if (node.nodeType === 3) {
+                var ret = reg.exec(node.nodeValue);
+                console.log(ret)
+                while (ret) {
+                    console.log(ret)
+                    var name = ret[1];
+                    console.log('name ', name);
+
+                    new Watcher(vm, node, name, {type:'text'});
+                    ret = reg.exec(node.nodeValue);
+                }
+                node.template = node.nodeValue;
+                console.log('template ', node.template)
+            } else {
+                console.log('node type is {}'.format(node.nodeType));
+            }
+        }
+
+        function nodeToFragment(node, vm) {
+            var frag = document.createDocumentFragment();
+            var child;
+            var count = 0;
+            while (child = node.firstChild) {
+                child.vparent = node;
+                compile(child, vm);
+                frag.appendChild(child);
+                count += 1;
+            }
+            console.warn(count);
+            return frag;
+        }
+
+        function defineReactive(vm, key, value) {
+            var dep = new Dep();
+            vm.$watcher[key] = dep;
+            Object.defineProperty(vm, key, {
+                get: function () {
+                    return value;
+                },
+                set: function (newValue) {
+                    if (newValue === value)
+                        return value;
+                    value = newValue;
+                    dep.notify();
+                }
+            });
+            if (value.constructor == Array) {
+                value.push = function (item) {
+                    this.__proto__.push.call(this, item);
+                    dep.notify();
+                }
+            }
+        }
+
+        function observe(obj, vm) {
+            for (var k in obj) {
+                defineReactive(vm, k, obj[k]);
+            }
+        }
+
+        var ViewModel = function (options) {
+            this.$el = options.el;
+            this.$data = options.data;
+            this.data = {};
+            this.$watcher = {};
+
+            var self = this;
+            // watch
+            observe(this.$data, this);
+
+            for (var k in options.data) {
+                var descriptor = {
+                    set: function (value) {
+                        self[k] = value;
+                    },
+                    get: function () {
+                        return self.$data[k];
+                    }
+                };
+                Object.defineProperty(this.data, k, descriptor);
+            }
+
+            // compile
+            this.$el.appendChild(nodeToFragment(this.$el, this));
+
+            for (var k in options.data) {
+                this.$watcher[k].notify();
+            }
+        }
+        ViewModel.prototype.notify = function (event, key, value) {
+            if (event == 'change') {
+                this._render[key].call(this);
+            }
+        }
+        ViewModel.prototype._dom_from_str = dom_from_str;
+
+
+
+        let list_vm = new ViewModel({
+            el: document.getElementById('list-wrapper'),
+            template: '<h1 v-for="list">{name}</h1>',
+            data: {
+                list: [{
+                    name: '1'
+                }, {
+                    name: '3'
+                }]
+            }
+        });
+        window.list_vm = list_vm;
+        list_vm.list.push({
+            name: '1xx'
+        })
+        console.log(list_vm.list);
+        // list_vm.list = [{
+        //     name: '11231',
+        //     score: '1.2k'
+        // }, {
+        //     name: '111',
+        //     score: '1.2k'
+        // }]
+        window.input_vm = new ViewModel({
+            el: document.getElementById('app'),
+            data: {
+                text: 'hello'
+            }
+        })
+
+        window.info_vm = new ViewModel({
+            el: document.querySelector('#info'),
+            data: {
+                src: "xx",
+                name: "张三",
+                age: "24"
+            }
+        })
+    })
+</script>
+
+</html>
