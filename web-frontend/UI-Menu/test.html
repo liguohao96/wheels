@@ -15,15 +15,30 @@
             justify-content: flex-start;
             background: lightcyan;
             height: 20PX;
+            margin-left: 100px;
             position: relative;
         }
 
         .menu-item {
-            margin: 0 10px 0;
+            width: 40px;
+            border-left: 1px solid black;
+            border-right: 1px solid black;
+            border-top: none;
+            border-bottom: none;
+            text-align: center;
+        }
+
+        .menu-item:nth-child(1) {
+            border-left: 2px solid black;
+        }
+
+        .menu-item:last-child {
+            border-right: 2px solid black;
         }
 
         .menu-list {
             display: flex;
+            background: lightcyan;
             flex-direction: row;
             flex-wrap: nowrap;
             justify-content: flex-start;
@@ -39,35 +54,47 @@
 </head>
 
 <body>
-    <div class="menu">
-        <div class="menu-item">
-            0 <strong>x</strong>
-        </div>
-        <div class="menu-item">
-            1 <strong>x</strong>
-            <div class="menu-list">
-                <div class="menu-item">
-                    11
-                    <div class="menu-list">
-                        <div class="menu-item">
-                            111
-                        </div>
-                        <div class="menu-item">
-                            112
-                        </div>
-                        <div class="menu-item">
-                            113
+    <div style="">
+        <div class="menu">
+            <div class="menu-item">
+                0
+                <strong>x</strong>
+            </div>
+            <div class="menu-item">
+                1
+                <strong>x</strong>
+                <div class="menu-list">
+                    <div class="menu-item">
+                        11
+                        <div class="menu-list">
+                            <div class="menu-item">
+                                111
+                            </div>
+                            <div class="menu-item">
+                                112
+                            </div>
+                            <div class="menu-item">
+                                113
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="menu-item">
-                    12
-                    <div class="menu-list">
-                        <div class="menu-item">
-                            121
+                    <div class="menu-item">
+                        12
+                        <div class="menu-list">
+                            <div class="menu-item">
+                                121
+                            </div>
+                            <div class="menu-item">
+                                122
+                            </div>
                         </div>
-                        <div class="menu-item">
-                            122
+                    </div>
+                    <div class="menu-item">
+                        13
+                        <div class="menu-list">
+                            <div class="menu-item">
+                                131
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -184,46 +211,46 @@
         var options = {
             'el': '.menu',
             'data': [{
-                    'name': '1',
+                'name': '1',
+                'type': 'list',
+                'list': [{
+                    'name': '11',
                     'type': 'list',
                     'list': [{
-                        'name': '11',
-                        'type': 'list',
-                        'list': [{
-                                'name': '111',
-                                'type': 'item'
-                            },
-                            {
-                                'name': '112',
-                                'type': 'item'
-                            },
-                            {
-                                'name': '113',
-                                'type': 'item'
-                            }
-                        ]
-                    }]
+                        'name': '111',
+                        'type': 'item'
+                    },
+                    {
+                        'name': '112',
+                        'type': 'item'
+                    },
+                    {
+                        'name': '113',
+                        'type': 'item'
+                    }
+                    ]
+                }]
+            },
+            {
+                'name': '2',
+                'type': 'list',
+                'list': [{
+                    'name': '21',
+                    'type': 'item'
                 },
                 {
-                    'name': '2',
+                    'name': '22',
                     'type': 'list',
                     'list': [{
-                            'name': '21',
-                            'type': 'item'
-                        },
-                        {
-                            'name': '22',
-                            'type': 'list',
-                            'list': [{
-                                name: '221',
-                                type: 'item'
-                            }]
-                        }
-                    ]
-                }, {
-                    'name': '3',
-                    type: 'item'
+                        name: '221',
+                        type: 'item'
+                    }]
                 }
+                ]
+            }, {
+                'name': '3',
+                type: 'item'
+            }
             ]
         };
         // new Menu(options);
@@ -241,8 +268,10 @@
             for (var i = 0; i < menu_list.length; ++i) {
                 deal_menu_item(menu_list[i]);
             }
-            if (menu_list.length > 0)
+            if (menu_list.length > 0) {
+                node.menu_list.style.left = '2px';
                 listen_events(node);
+            }
         }
 
         function listen_events(node) {
@@ -280,8 +309,8 @@
             var childs = node.childNodes;
             for (var i = 0, len = childs.length; i < len; ++i) {
                 if (childs[i].nodeType === 1 && (childs[i].classList.contains('menu-list') || childs[i]
-                        .classList
-                        .contains('menu-item'))) {
+                    .classList
+                    .contains('menu-item'))) {
                     ret.push(childs[i]);
                 }
             }
@@ -317,6 +346,7 @@
             for (var i = 0, len = childs.length; i < len; ++i) {
                 if (childs[i].nodeType === 1 && childs[i].classList.contains('menu-list')) {
                     list_dom = childs[i];
+                    node.menu_list = list_dom;
                     break;
                 }
             }
