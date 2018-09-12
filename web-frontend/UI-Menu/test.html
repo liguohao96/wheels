@@ -56,7 +56,7 @@
 <body>
     <div style="">
         <div class="menu">
-            <div class="menu-item">
+            <!-- <div class="menu-item">
                 0
                 <strong>x</strong>
             </div>
@@ -98,7 +98,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> -->
         </div>
     </div>
 </body>
@@ -191,13 +191,88 @@
             if (!menu_dom)
                 throw new Error('can not find ' + el);
             var data = options.data;
-            for (let i = 0; i < data.length; ++i) {
-                let dom = document.createElement('div');
-                // dom.
+            var items = [];
+            for (var i = 0; i < data.length; ++i) {
+                var item = constructor.prototype.buildItem(data[i]);
+                menu_dom.appendChild(item);
             }
+            this._item_width = menu_dom.querySelector('.menu-item').offsetWidth;
+            if (!this._item_width)
+                throw new Error('can not play with 0 width.');
+            constructor.prototype.positionFix(menu_dom);
+        }
+        constructor.prototype.buildItem = function (option) {
+            var item_node = document.createElement('div');
+            item_node.classList.add('menu-item');
+            var childs = [];
+            childs.push(document.createTextNode(option['name']));
+            if (option.type == 'list') {
+                constructor.prototype.addHandlers(item_node, list_handlers);
+                var menu_list = document.createElement('div');
+                menu_list.classList.add('menu-list');
+                for (var i = 0; i < option.list.length; ++i) {
+                    menu_list.appendChild(constructor.prototype.buildItem(option.list[i]));
+                }
+                childs.push(menu_list);
+                item_node.$menu_list = menu_list;
+            } else {
+                // constructor.prototype.addHandlers(item_node, );
+            }
+            for (var i = 0; i < childs.length; ++i) {
+                item_node.appendChild(childs[i]);
+            }
+            return item_node;
+        }
+        constructor.prototype.addHandlers = function (node, handlers) {
+            for (var k in handlers) {
+                node.addEventListener(k, handlers[k]);
+            }
+        }
+        constructor.prototype.positionFix = function (menu_root) {
+            var childs = menu_root.childNodes;
+            for (var i = 0; i < childs.length; ++i) {
+                var menu_list_dom = constructor.prototype.getMenuList(childs[i]);
+                if (menu_list_dom) {
+                    constructor.prototype.positionFix(childs[i]);
+                }
+            }
+        }
+        constructor.prototype.getMenuList(node) {
+            var childs = node.childNodes;
+            for (var i = 0; i < childs.length; ++i) {
+                if (childs[i].classList.contains('menu-list')) {
+                    return childs[i];
+                }
+            }
+            return null;
+        }
 
-            document.createElement('div');
 
+        function _handler_with_node(func, node) {
+            return function (event) {
+                func(event, node);
+            };
+        }
+
+        function _in_handler(event) {
+            var target_dom = event.target,
+                menu_list_dom = target_dom.$menu_list;
+            if (menu_list_dom) {
+                menu_list_dom.style.display = 'flex';
+            }
+        }
+
+        function _out_handler(event) {
+            var target_dom = event.target,
+                menu_list_dom = target_dom.$menu_list;
+            if (menu_list_dom) {
+                menu_list_dom.style.display = 'none';
+            }
+        }
+        var list_handlers = {
+            'mouseenter': _in_handler,
+            // 'click': _in_handler,
+            'mouseleave': _out_handler
         }
         return constructor;
     })()
@@ -211,56 +286,59 @@
         var options = {
             'el': '.menu',
             'data': [{
-                'name': '1',
-                'type': 'list',
-                'list': [{
-                    'name': '11',
+                    'name': '1',
                     'type': 'list',
                     'list': [{
-                        'name': '111',
-                        'type': 'item'
-                    },
-                    {
-                        'name': '112',
-                        'type': 'item'
-                    },
-                    {
-                        'name': '113',
-                        'type': 'item'
-                    }
-                    ]
-                }]
-            },
-            {
-                'name': '2',
-                'type': 'list',
-                'list': [{
-                    'name': '21',
-                    'type': 'item'
+                        'name': '11',
+                        'type': 'list',
+                        'list': [{
+                                'name': '111',
+                                'type': 'item'
+                            },
+                            {
+                                'name': '112',
+                                'type': 'item'
+                            },
+                            {
+                                'name': '113',
+                                'type': 'item'
+                            }
+                        ]
+                    }]
                 },
                 {
-                    'name': '22',
+                    'name': '2',
                     'type': 'list',
                     'list': [{
-                        name: '221',
-                        type: 'item'
-                    }]
+                            'name': '21',
+                            'type': 'item'
+                        },
+                        {
+                            'name': '22',
+                            'type': 'list',
+                            'list': [{
+                                name: '221',
+                                type: 'item'
+                            }]
+                        }
+                    ]
+                }, {
+                    'name': '3',
+                    type: 'item'
                 }
-                ]
-            }, {
-                'name': '3',
-                type: 'item'
-            }
             ]
         };
-        // new Menu(options);
+        new Menu(options);
 
 
-        console.log(menu)
+
+        console.log(menu.offsetLeft)
         var menu_list = get_menu_item(menu);
-        for (var i = 0; i < menu_list.length; ++i) {
-            deal_menu_item(menu_list[i]);
-        }
+        var childs = menu.childNodes;
+
+        // for (var i = 0; i < menu_list.length; ++i) {
+        //     deal_menu_item(menu_list[i]);
+        // }
 
         function deal_menu_item(node) {
             console.log(node);
@@ -309,8 +387,8 @@
             var childs = node.childNodes;
             for (var i = 0, len = childs.length; i < len; ++i) {
                 if (childs[i].nodeType === 1 && (childs[i].classList.contains('menu-list') || childs[i]
-                    .classList
-                    .contains('menu-item'))) {
+                        .classList
+                        .contains('menu-item'))) {
                     ret.push(childs[i]);
                 }
             }
