@@ -96,6 +96,12 @@ int main(int argc, char *argv[]) {
     //     }
     // };
 
+    auto mime = std::map<std::string, std::string>();
+    mime[std::string(".html")] = std::string("text/html");
+    mime[std::string(".js")] = std::string("application/json");
+    std::cout << "MIME done" << std::endl;
+    std::cout << mime.find(std::string(".html"))->second << std::endl;
+
     std::vector<std::shared_ptr<HttpConnection>> connections;
     std::cout << "declare accept_handler" << std::endl;
     std::string data;
@@ -103,19 +109,19 @@ int main(int argc, char *argv[]) {
                        std::shared_ptr<HttpConnection>)>
         accept_handler;
     auto router = std::shared_ptr<router_type>(new router_type());
-    (*router)["/"]["GET"] = [](std::shared_ptr<Request> req,
-                               std::shared_ptr<Response> res) {
-        auto &response = res->data;
-        response << "HTTP/1.1 200 OK\r\n";
-        response << "Content-Type: text/html\r\n";
-        // std::string response_data = "<!DOCTYPE
-        // html><html><head></head><body><h1>hello world!</h1></body></html>";
-        std::string response_data = "Hello world!";
-        response << "Content-Length: " << response_data.length() << "\r\n";
-        response << "\r\n";
-        response << response_data;
-        std::cout << response.str() << std::endl;
-    };
+    // (*router)["/"]["GET"] = [](std::shared_ptr<Request> req,
+    //                            std::shared_ptr<Response> res) {
+    //     auto &response = res->data;
+    //     response << "HTTP/1.1 200 OK\r\n";
+    //     response << "Content-Type: text/html\r\n";
+    //     // std::string response_data = "<!DOCTYPE
+    //     // html><html><head></head><body><h1>hello world!</h1></body></html>";
+    //     std::string response_data = "Hello world!";
+    //     response << "Content-Length: " << response_data.length() << "\r\n";
+    //     response << "\r\n";
+    //     response << response_data;
+    //     std::cout << response.str() << std::endl;
+    // };
     // (*router)["/index.html"]["GET"] = [](std::shared_ptr<Request> req,
     //                                      std::shared_ptr<Response> res) {
     //     auto &response = res->data;
@@ -129,7 +135,7 @@ int main(int argc, char *argv[]) {
     //     response << response_data;
     //     // std::cout << response.str() << std::endl;
     // };
-    (*router)["^/(.*)$"]["GET"] = [](std::shared_ptr<Request> req,
+    (*router)["^/(.*)$"]["GET"] = [&mime](std::shared_ptr<Request> req,
                                      std::shared_ptr<Response> res) {
         try {
             auto web_root_path = boost::filesystem::canonical("../static");
@@ -140,6 +146,12 @@ int main(int argc, char *argv[]) {
 
             auto ifs = std::make_shared<std::ifstream>();
             std::cout << path.string() << std::endl;
+            auto mime_itr = mime.find(path.extension().string());
+            std::string mime_str;
+            if(mime_itr != mime.end()){
+                mime_str = std::move(mime_itr->second);
+            }
+            std::cout << mime_str << std::endl;
             ifs->open(path.string(),
                       std::ifstream::in | std::ios::binary | std::ios::ate);
 
@@ -149,7 +161,7 @@ int main(int argc, char *argv[]) {
                 res->header["Content-Length"] = std::to_string(length);
                 auto &response = res->data;
                 response << "HTTP/1.1 200 OK\r\n";
-                response << "Content-Type: text/html\r\n";
+                response << "Content-Type: " << mime_str << "\r\n";
                 response << "Content-Length: " << res->header["Content-Length"]
                          << "\r\n";
                 response << "\r\n";
