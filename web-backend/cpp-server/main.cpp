@@ -10,8 +10,10 @@
 #include <regex>
 
 #include "http_server.hpp"
+#include "nlohmann/json.hpp"
 
 namespace ip = boost::asio::ip;
+using json = nlohmann::json;
 
 void Print(const boost::system::error_code &ec,
            boost::asio::steady_timer *timer, int *count) {
@@ -89,13 +91,6 @@ int main(int argc, char *argv[]) {
     ip::tcp::acceptor tcp_acceptor(io_ctx, tcp_endpoint);
     tcp_acceptor.listen();
 
-    // auto write_handler = [&tcp_socket](const boost::system::error_code& ec,
-    //                                    std::size_t bytes_transferred) {
-    //     if (!ec) {
-    //         tcp_socket.shutdown(ip::tcp::socket::shutdown_send);
-    //     }
-    // };
-
     auto mime = std::map<std::string, std::string>();
     mime[std::string(".html")] = std::string("text/html");
     mime[std::string(".js")] = std::string("application/json");
@@ -109,34 +104,8 @@ int main(int argc, char *argv[]) {
                        std::shared_ptr<HttpConnection>)>
         accept_handler;
     auto router = std::shared_ptr<router_type>(new router_type());
-    // (*router)["/"]["GET"] = [](std::shared_ptr<Request> req,
-    //                            std::shared_ptr<Response> res) {
-    //     auto &response = res->data;
-    //     response << "HTTP/1.1 200 OK\r\n";
-    //     response << "Content-Type: text/html\r\n";
-    //     // std::string response_data = "<!DOCTYPE
-    //     // html><html><head></head><body><h1>hello world!</h1></body></html>";
-    //     std::string response_data = "Hello world!";
-    //     response << "Content-Length: " << response_data.length() << "\r\n";
-    //     response << "\r\n";
-    //     response << response_data;
-    //     std::cout << response.str() << std::endl;
-    // };
-    // (*router)["/index.html"]["GET"] = [](std::shared_ptr<Request> req,
-    //                                      std::shared_ptr<Response> res) {
-    //     auto &response = res->data;
-    //     response << "HTTP/1.1 200 OK\r\n";
-    //     response << "Content-Type: text/html\r\n";
-    //     std::string response_data =
-    //         "<!DOCTYPE html><html><head></head><body><h1>hello "
-    //         "world!</h1></body></html>";
-    //     response << "Content-Length: " << response_data.length() << "\r\n";
-    //     response << "\r\n";
-    //     response << response_data;
-    //     // std::cout << response.str() << std::endl;
-    // };
     (*router)["^/(.*)$"]["GET"] = [&mime](std::shared_ptr<Request> req,
-                                     std::shared_ptr<Response> res) {
+                                          std::shared_ptr<Response> res) {
         try {
             auto web_root_path = boost::filesystem::canonical("../static");
             auto path = boost::filesystem::canonical(web_root_path / req->url);
@@ -144,39 +113,25 @@ int main(int argc, char *argv[]) {
 
             if (boost::filesystem::is_directory(path)) path /= "index.html";
 
-            auto ifs = std::make_shared<std::ifstream>();
-            std::cout << path.string() << std::endl;
-            auto mime_itr = mime.find(path.extension().string());
-            std::string mime_str;
-            if(mime_itr != mime.end()){
-                mime_str = std::move(mime_itr->second);
-            }
-            std::cout << mime_str << std::endl;
-            ifs->open(path.string(),
-                      std::ifstream::in | std::ios::binary | std::ios::ate);
+            if (boost::filesystem::exists(path)) res->send_file(path);
 
-            if (*ifs) {
-                auto length = ifs->tellg();
-                ifs->seekg(0, std::ios::beg);
-                res->header["Content-Length"] = std::to_string(length);
-                auto &response = res->data;
-                response << "HTTP/1.1 200 OK\r\n";
-                response << "Content-Type: " << mime_str << "\r\n";
-                response << "Content-Length: " << res->header["Content-Length"]
-                         << "\r\n";
-                response << "\r\n";
-
-                boost::asio::streambuf sb;
-                ifs->get(sb, '\0');
-
-                boost::asio::streambuf::const_buffers_type bufs = sb.data();
-                std::string file_content(boost::asio::buffers_begin(bufs),
-                                         boost::asio::buffers_end(bufs));
-                response << file_content;
-            }
         } catch (const std::exception &ex) {
             std::cout << ex.what() << std::endl;
         }
+    };
+    (*router)["^/json$"]["POST"] = [](std::shared_ptr<Request> req,
+                                      std::shared_ptr<Response> res) {
+        std::cout << "/json POST" << std::endl;
+        std::cout << req->header["Content-Type"] << std::endl;
+        std::cout << req->content << std::endl;
+        auto json_data = json::parse(req->content);
+
+        std::string json_str = json_data.dump();
+        res->status(200).header("Content-Type", "application/json");
+        res->header("Content-Length", std::to_string(json_str.length()));
+
+        res->send_header();
+        res->content << json_str << "\r\n";
     };
     accept_handler = [&io_ctx, &connections, &tcp_acceptor, &accept_handler,
                       &router](const boost::system::error_code &ec,
@@ -187,19 +142,8 @@ int main(int argc, char *argv[]) {
             return;
         }
         if (!ec) {
-            // while(true){
-            //     std::string buf_data;
-            //     tcp_socket.read_some(boost::asio::buffer(buf_data));
-            // }
-            // boost::asio::async_write(tcp_socket,
-            // boost::asio::buffer(data), write_handler);
-            // std::shared_ptr<HttpConnection> conn =
-            // std::make_shared<HttpConnection>(sock_ptr);
-            // connections.push_back(conn);
             conn->deal();
         }
-        // std::unique_ptr<ip::tcp::socket> new_sock_ptr =
-        // std::make_unique<ip::tcp::socket>(io_ctx);
         std::unique_ptr<ip::tcp::socket> new_sock_ptr(
             new ip::tcp::socket(io_ctx));
         std::shared_ptr<HttpConnection> new_conn =
@@ -208,8 +152,6 @@ int main(int argc, char *argv[]) {
             *new_conn->_socket,
             std::bind(accept_handler, std::placeholders::_1, new_conn));
     };
-    // std::unique_ptr<ip::tcp::socket> tcp_socket =
-    // std::make_unique<ip::tcp::socket>(io_ctx);
     std::unique_ptr<ip::tcp::socket> tcp_socket(new ip::tcp::socket(io_ctx));
     std::shared_ptr<HttpConnection> new_conn =
         std::make_shared<HttpConnection>(std::move(tcp_socket), router);
@@ -217,6 +159,7 @@ int main(int argc, char *argv[]) {
     tcp_acceptor.async_accept(
         *new_conn->_socket,
         std::bind(accept_handler, std::placeholders::_1, new_conn));
+
     std::cout << "io_ctx.run()" << std::endl;
     io_ctx.run();
 
