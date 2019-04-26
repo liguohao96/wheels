@@ -3,15 +3,17 @@ import numpy as np
 def QR(matrix):
     H, W = matrix.shape
 
-    rest = np.zeros((H, 1), dtype=np.float32)
-    Q = np.zeros_like(matrix, dtype=np.float32)
-    R = np.zeros_like(matrix, dtype=np.float32)
+    np_dtype = np.float64
+
+    rest = np.zeros((H, 1), dtype=np_dtype)
+    Q = np.zeros_like(matrix, dtype=np_dtype)
+    R = np.zeros_like(matrix, dtype=np_dtype)
 
     Q[:, 0] = matrix[:, 0] / np.sqrt(np.sum(np.square(matrix[:, 0])))
     R[0, 0] = np.matmul( matrix[:, 0].T, Q[:, 0] )
 
     for i in range(1, W):
-        rest = np.zeros(H, dtype=np.float32)
+        rest = np.zeros(H, dtype=np_dtype)
         for j in range(0, i):
             R[j, i] = np.matmul( matrix[:, i].T, Q[:, j] )
             rest += R[j, i] * Q[:, j]
@@ -30,13 +32,13 @@ if __name__ == "__main__":
     q, r = QR(A)
     q_np, r_np = np.linalg.qr(A)
     print('-----result-------')
-    print(q)
-    print(r)
-    print(np.matmul(q, r))
+    print('Q:\n', q)
+    print('R:\n', r)
+    print('QxR:\n', np.matmul(q, r))
     print('-------end--------')
 
     print('-----numpy-------')
-    print(q_np)
-    print(r_np)
-    print(np.matmul(q_np, r_np))
+    print('Q:\n', q_np)
+    print('R:\n', r_np)
+    print('QxR:\n', np.matmul(q_np, r_np))
     print('-------end--------')

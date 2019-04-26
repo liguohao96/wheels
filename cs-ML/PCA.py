@@ -1,11 +1,12 @@
 import numpy as np
 
 # data array, Num_Item x Num_Dim
-data_m = np.array( [[-1, -2], [-1, 0], [0, 0], [2, 1], [0, 1]] )
+data_m = np.array([[-1, -2], [-1, 0], [0, 0], [2, 1], [0, 1]])
 
 item_num = data_m.shape[0]
 
 # mean data_arr
+mean = np.mean(data_m, axis=0)
 data_m = data_m - np.mean(data_m, axis=0)
 
 # covariance matrix
@@ -18,3 +19,10 @@ print(values)
 
 pca_base = vectors.T
 print(np.matmul(np.matmul(pca_base, covar_m), pca_base.T))
+
+test = np.array([[-1, -2]])
+coefficent = np.matmul(test - mean, vectors)
+print('co:\n', coefficent)
+print('base:\n', vectors)
+print(np.matmul(coefficent, vectors.T) + mean)
+print(mean)
