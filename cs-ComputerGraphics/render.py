@@ -99,7 +99,7 @@ def render_colors(vertices, triangles, colors, h, w, c=3, BG=None):
     else:
         assert BG.shape[0] == h and BG.shape[1] == w and BG.shape[2] == c
         image = BG
-    depth_buffer = np.zeros([h, w]) - 999999.
+    depth_buffer = np.zeros([h, w]) + 999999.
 
     for i in range(triangles.shape[0]):
         tri = triangles[i, :]  # 3 vertex indices
@@ -122,7 +122,7 @@ def render_colors(vertices, triangles, colors, h, w, c=3, BG=None):
                 point_depth = w0 * vertices[tri[0], 2] + w1 * \
                     vertices[tri[1], 2] + w2 * vertices[tri[2], 2]
 
-                if point_depth > depth_buffer[v, u]:
+                if point_depth < depth_buffer[v, u]:
                     depth_buffer[v, u] = point_depth
                     image[v, u, :] = w0 * colors[tri[0], :] + w1 * \
                         colors[tri[1], :] + w2 * colors[tri[2], :]
